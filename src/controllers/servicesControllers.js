@@ -1,53 +1,71 @@
 const { v4: uuidv4 } = require("uuid");
 
 const mongoose = require("mongoose");
+require("dotenv").config();
 
 async function main() {
-  await mongoose.connect(
-    "mongodb+srv://samuelmuleu:Aurora2@cluster0.7fvba.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-  );
+  try {
+    await mongoose.connect(process.env.MONGODB_URI);
+    return mongoose.connection;
+  } catch (error) {
+    console.error("Error connecting to MongoDB:", error);
+  }
 }
-main().catch((err) => console.log(err));
-const Taks = mongoose.model("task", {
+
+main();
+
+const Tasks = mongoose.model("task", {
   title: String,
   completed: Boolean,
 });
 
 const CreateServices = async (req, res) => {
   const { title, completed } = req.body;
+  try {
+    if (!title) {
+      return res
+        .status(400)
+        .json({ error: "O título da tarefa é obrigatório!" });
+    }
+    const newTask = new Tasks({
+      id: uuidv4(),
+      title: title,
+      completed: completed,
+    });
+    await newTask.save();
+    return res.status(201).json(newTask);
 
-  if (!title) {
-    return res.status(400).json({ error: "O título da tarefa é obrigatório!" });
+  } catch {
+    res.status(500).json({ error: "Erro ao Criar tarefa" });
   }
 
-  const newTask = new Taks({
-    id: uuidv4(),
-    title: title,
-    completed: completed,
-  });
-
-  await newTask.save();
-  res.send(newTask);
-
-  return res.status(201).json(newTask);
 };
 
-const getServices = async(req, res) => {
-  const tasks = await Taks.find()
-   return  res.json(tasks);
-   
+const getServices = async (req, res) => {
+  try {
+    const tasks = await Tasks.find();
+    return res.json(tasks);
+  } catch {
+    res.status(500).json({ error: "Erro ao Procurar tarefas" });
+  }
 };
 
-const deleteServices = (req, res) => {
+const deleteServices = async (req, res) => {
   const { id } = req.params;
 
-  const services = Taks;
-  const servicesIndex = services.findIndex((service) => service.id === id);
-  if (servicesIndex === -1) {
-    return res.status(404).json({ message: "Produto não encontrado" });
+  try {
+    const task = await Tasks.findByIdAndDelete({
+      _id:id
+    });
+
+    if (!task) {
+      return res.status(404).json({ message: "Produto não encontrado" });
+    }
+
+    res.status(200).json({ message: "Produto excluído com sucesso" });
+  } catch {
+    res.status(500).json({ error: "Erro ao excluir tarefa" });
   }
-  services.splice(servicesIndex, 1);
-  res.status(200).json({ message: "Produto excluído com sucesso" });
 };
 
 module.exports = { CreateServices, getServices, deleteServices };
