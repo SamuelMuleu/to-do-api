@@ -34,11 +34,9 @@ const CreateServices = async (req, res) => {
     });
     await newTask.save();
     return res.status(201).json(newTask);
-
   } catch {
     res.status(500).json({ error: "Erro ao Criar tarefa" });
   }
-
 };
 
 const getServices = async (req, res) => {
@@ -55,7 +53,7 @@ const deleteServices = async (req, res) => {
 
   try {
     const task = await Tasks.findByIdAndDelete({
-      _id:id
+      _id: id,
     });
 
     if (!task) {
@@ -67,5 +65,27 @@ const deleteServices = async (req, res) => {
     res.status(500).json({ error: "Erro ao excluir tarefa" });
   }
 };
+const updateServices = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const task = await Tasks.findByIdAndDelete(
+      id,
+      { completed },
+      { new: true }
+    );
+    if (!task) {
+      return res.status(404).json({ message: "Tarefa não encontrada" });
+    }
+  } catch {
+    res.status(404).json({ message: "Tarefa não encontrada" });
 
-module.exports = { CreateServices, getServices, deleteServices };
+    res.json(updateServices);
+  }
+};
+
+module.exports = {
+  CreateServices,
+  getServices,
+  deleteServices,
+  updateServices,
+};
