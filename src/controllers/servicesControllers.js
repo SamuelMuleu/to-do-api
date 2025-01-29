@@ -67,8 +67,9 @@ const deleteServices = async (req, res) => {
 };
 const updateServices = async (req, res) => {
   const { id } = req.params;
+  const { completed } = req.body;
   try {
-    const task = await Tasks.findByIdAndDelete(
+    const task = await Tasks.findByIdAndUpdate(
       id,
       { completed },
       { new: true }
@@ -76,11 +77,12 @@ const updateServices = async (req, res) => {
     if (!task) {
       return res.status(404).json({ message: "Tarefa não encontrada" });
     }
+    res.json(updateServices);
   } catch {
     res.status(404).json({ message: "Tarefa não encontrada" });
 
-    res.json(updateServices);
   }
+
 };
 
 module.exports = {
