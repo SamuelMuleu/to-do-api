@@ -1,14 +1,14 @@
-const express = require('express');
-const servicesRoutes = require('./routes/services')
+require("dotenv").config();
+const app = require("./app");
+const { connectDB } = require("./db");
 
-const cors = require('cors');
-const app = express();
-const port = 3001
+const port = Number(process.env.PORT) || 3001;
 
-app.use(cors());
-app.use(express.json())
-app.use('/tasks',servicesRoutes)
-
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+connectDB()
+  .then(() => {
+    app.listen(port, () => console.log(`API rodando em http://localhost:${port}`));
+  })
+  .catch((error) => {
+    console.error("Não foi possível conectar ao MongoDB:", error.message);
+    process.exit(1);
   });
