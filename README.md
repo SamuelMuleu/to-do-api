@@ -1,91 +1,52 @@
-# To-Do List API
+# To-Do API
 
-Este é um sistema simples de gerenciamento de tarefas (To-Do List), desenvolvido em Node.js e Express. A API permite a criação, listagem, exclusão e atualização de tarefas, com persistência de dados em memória (em um array de objetos).
+API REST de tarefas em **Node.js + Express + MongoDB (Mongoose)**, usada pelo front-end [toDo](https://github.com/SamuelMuleu/toDo).
 
-## Tecnologias Utilizadas
+## Endpoints
 
-- Node.js
-- Express
+| Método | Rota | Corpo | Resposta |
+| --- | --- | --- | --- |
+| `GET` | `/health` | — | `200 { "status": "ok" }` |
+| `GET` | `/tasks` | — | `200` lista de tarefas (mais antigas primeiro) |
+| `POST` | `/tasks` | `{ "title": "Estudar", "completed": false }` | `201` tarefa criada |
+| `PATCH` | `/tasks/:id` | `{ "completed": true }` e/ou `{ "title": "..." }` | `200` tarefa atualizada |
+| `DELETE` | `/tasks/:id` | — | `204` |
 
-  
-## Instalação
+Tarefa: `{ "_id", "title", "completed", "createdAt", "updatedAt" }`
 
-1. Clone o repositório:
-   ```bash
-   git clone https://github.com/SamuelMuleu/to-do-api.git
-   cd todoapi
-Instale as dependências:
+Erros retornam `{ "error": "mensagem" }` com o status adequado: `400` (título vazio ou com mais de 200 caracteres, `completed` não booleano, ID inválido, JSON malformado), `404` (tarefa ou rota inexistente) e `500`.
+
+## Rodando localmente
 
 ```bash
-
+cp .env.example .env   # preencha MONGODB_URI
 npm install
-```
-Inicie o servidor:
-
-```bash
-npm start
-O servidor estará rodando em http://localhost:3000.
+npm run dev            # http://localhost:3001
+npm test               # testes de integração com MongoDB em memória
 ```
 
-Endpoints
-Adicionar Tarefa
-```bash
-URL: /todos
-Método: POST
-Corpo da Requisição:
-{
-    "title": "Nome da Tarefa",
-    "completed": false
-}
+### Variáveis de ambiente
+
+| Variável | Obrigatória | Descrição |
+| --- | --- | --- |
+| `MONGODB_URI` | sim | String de conexão do MongoDB Atlas |
+| `PORT` | não | Porta local (padrão `3001`) |
+| `CORS_ORIGIN` | não | Origens permitidas, separadas por vírgula (padrão: todas) |
+
+## Deploy
+
+- **Vercel**: importe o repositório; `vercel.json` encaminha todas as rotas para `api/index.js` (função serverless). Defina `MONGODB_URI` e `CORS_ORIGIN` nas variáveis de ambiente.
+- **Render / Railway / VPS**: comando de start `npm start`.
+
+## Estrutura
+
 ```
-
-
-
-Atualizar Tarefa
-```bash
-URL: /todos/:id
-Método: PUT
-Corpo da Requisição:
-{
-    "title": "Título Atualizado",
-    "completed": true
-}
-```
-
-Excluir Tarefa
-```bash
-
-URL: /todos/:id
-Método: DELETE
-```
-Estrutura do Projeto
-```bash
-src
-├── controllers
-│   └── todoController.js
-├── routes
-│   └── todoRoutes.js
-├── app.js
-├── package.json
-└── server.js
-```
-Explicação dos Endpoints:
-
-Adicionar Tarefa (POST /todos): Cria uma nova tarefa com um título e um status de conclusão (opcional). Caso o status não seja informado, será definido como false por padrão.
-
-Listar Tarefas (GET /todos): Retorna todas as tarefas cadastradas.
-
-Excluir Tarefa (DELETE /todos/:id): Remove a tarefa identificada pelo id.
-
-Exemplo de Uso com o Postman
-Adicionar Tarefa:
-
-Método: POST
-URL: http://localhost:3000/todos
-Body (JSON):
-```bash
-{
-  "title": "Nova tarefa",
-  "completed": false
-}
+api/index.js                  # entrada serverless (Vercel)
+src/app.js                    # app Express (CORS, JSON, rotas, erros)
+src/server.js                 # entrada local / servidor tradicional
+src/db.js                     # conexão reaproveitada com o MongoDB
+src/models/Task.js            # schema com validação
+src/controllers/tasksController.js
+src/routes/tasks.js
+test/api.test.mjs
 ```
